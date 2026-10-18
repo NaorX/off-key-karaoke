@@ -2223,7 +2223,8 @@ export function createScene(canvas) {
       // Singer on the right; the karaoke video sits over the left of the frame
       case 'sing': return { pos: [0, 3.0, 4.5], look: [-2.35, 2.2, -2.75], fov: 40, cut: 'sing' };
       case 'vote': return { pos: [0, 4.3, 8.4], look: [0, 1.2, -1.2], fov: 42 };
-      case 'cards': return { pos: [1.75, 2.95, -4.5], look: [-0.1, 1.6, 1.7], fov: 48, cut: 'cards' };
+      // From behind the singer and above their head, so they never block the crowd's score cards
+      case 'cards': return { pos: [1.4, 4.4, -4.6], look: [-0.1, 1.25, 1.7], fov: 46, cut: 'cards' };
       // In front of the crowd's seats, so nobody in the front row blocks the singer
       case 'score': return { pos: [0, 2.2, 1.05], look: [0, 2.0, -2.75], fov: 50, cut: 'score' };
       case 'final': {
