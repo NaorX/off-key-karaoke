@@ -1,0 +1,25 @@
+{
+  "name": "off-key",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A karaoke party game for friends, played in the browser: sing, sabotage, vote.",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@phosphor-icons/web": "^2.1.2",
+    "livekit-client": "^2.22.3",
+    "ws": "^8.22.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NaorX/off-key-karaoke.git"
+  },
+  "homepage": "https://github.com/NaorX/off-key-karaoke"
+}

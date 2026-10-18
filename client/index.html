@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#0d0a10">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Off Key</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='36' r='24' fill='%23ff4d3d'/><path d='M32 14c-2-6-8-8-13-7 4 2 6 4 7 7-5-1-9 1-11 4 6-1 10 0 13 2 1 3 2 5 4 6 2-1 3-3 4-6 3-2 7-3 13-2-2-3-6-5-11-4 1-3 3-5 7-7-5-1-11 1-13 7Z' fill='%2325b46b'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@800;900&family=Lilita+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/vendor/phosphor/fill/style.css">
+<link rel="stylesheet" href="/vendor/phosphor/duotone/style.css">
+<link rel="stylesheet" href="/style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+  "livekit-client": "/vendor/livekit-client.mjs"
+} }
+</script>
+</head>
+<body data-screen="loading" data-phase="" data-role="crowd">
+<canvas id="scene"></canvas>
+<div id="tags"></div>
+<div id="fx"></div>
+
+<template id="logo-tpl">
+  <svg class="logo" viewBox="0 0 560 330" aria-label="Off Key">
+    <g transform="rotate(-6 280 165)">
+      <g class="waves" fill="none" stroke-linecap="round">
+        <path d="M452 64a58 58 0 0 1 0 82" stroke="#0c0e22" stroke-width="30"/>
+        <path d="M488 38a96 96 0 0 1 0 134" stroke="#0c0e22" stroke-width="30"/>
+        <path d="M452 64a58 58 0 0 1 0 82" stroke="#ffc22e" stroke-width="15"/>
+        <path d="M488 38a96 96 0 0 1 0 134" stroke="#ff4d3d" stroke-width="15"/>
+      </g>
+      <text x="236" y="152" text-anchor="middle" font-family="Lilita One" font-size="168" fill="#0c0e22" stroke="#0c0e22" stroke-width="30" stroke-linejoin="round" dy="12">OFF</text>
+      <text x="236" y="152" text-anchor="middle" font-family="Lilita One" font-size="168" fill="#fff6e8" stroke="#0c0e22" stroke-width="24" stroke-linejoin="round" paint-order="stroke">OFF</text>
+      <text x="286" y="300" text-anchor="middle" font-family="Lilita One" font-size="168" fill="#0c0e22" stroke="#0c0e22" stroke-width="30" stroke-linejoin="round" dy="12">KEY</text>
+      <text x="286" y="300" text-anchor="middle" font-family="Lilita One" font-size="168" fill="#ff4d3d" stroke="#0c0e22" stroke-width="24" stroke-linejoin="round" paint-order="stroke">KEY</text>
+      <g transform="translate(470 222) rotate(18)">
+        <circle r="44" fill="#0c0e22"/>
+        <circle r="36" fill="#ff4d3d"/>
+        <ellipse cx="-13" cy="-10" rx="10" ry="6" fill="#fff" opacity=".55" transform="rotate(-30 -13 -10)"/>
+        <path d="M0-34c-2-9-11-12-19-10 6 3 9 6 10 10-7-1-13 1-16 6 9-1 15 0 19 3 1 5 3 7 6 8 3-1 5-4 6-8 4-3 10-4 19-3-3-5-9-7-16-6 1-4 4-7 10-10-8-2-17 1-19 10Z" fill="#25b46b" stroke="#0c0e22" stroke-width="3"/>
+      </g>
+    </g>
+  </svg>
+</template>
+
+<div id="ui">
+  <!-- ================= MENU ================= -->
+  <section class="screen" id="s-menu">
+    <div class="topbar">
+      <div class="brand-mini">OFF <b>KEY</b><span class="ver">v1.0</span></div>
+      <span class="grow"></span>
+      <span class="stat-chip" id="voicePill"><i class="ph-fill ph-microphone"></i><span>Voice</span></span>
+      <button class="icon-btn" data-act="settings" title="Settings"><i class="ph-fill ph-gear-six"></i></button>
+    </div>
+
+    <div class="player-card" id="playerCard">
+      <div class="pc-portrait" id="pcPortrait"></div>
+      <div class="pc-body">
+        <input id="nameInput" maxlength="16" autocomplete="off" spellcheck="false" aria-label="Your name">
+        <div class="pc-level"><span class="lvl" id="pcLevel">LVL 1</span><span class="pc-sub" id="pcSub">0 songs sung</span></div>
+      </div>
+      <i class="ph-fill ph-pencil-simple pc-edit"></i>
+      <button class="pc-style" id="pcStyle"><i class="ph-fill ph-t-shirt"></i><span>STYLE</span></button>
+    </div>
+    <div class="look-bar" id="lookBar">
+      <div class="lb-head"><b>YOUR LOOK</b><button class="lb-done" id="lbDone"><i class="ph-bold ph-check"></i>DONE</button></div>
+      <div class="lb-tabs" id="lbTabs">
+        <button data-tab="hat" class="on"><i class="ph-fill ph-baseball-cap"></i>Hat</button>
+        <button data-tab="color"><i class="ph-fill ph-palette"></i>Color</button>
+        <button data-tab="mood"><i class="ph-fill ph-smiley"></i>Mood</button>
+        <button data-tab="face"><i class="ph-fill ph-sunglasses"></i>Face</button>
+        <button data-tab="outfit"><i class="ph-fill ph-t-shirt"></i>Outfit</button>
+      </div>
+      <div class="lb-row">
+        <span class="lb-label" id="hatName">Headphones</span>
+        <span class="lb-sep"></span>
+        <div class="swatches" id="swatches"></div>
+        <div class="lb-colors" id="lookColors"></div>
+      </div>
+    </div>
+
+    <div class="menu-col">
+      <div class="logo-slot"></div>
+      <button class="btn btn-xl mustard" data-act="play"><span class="badge"><i class="ph-fill ph-play"></i></span><span class="lbl">PLAY</span></button>
+      <button class="btn btn-lg sky" data-act="create"><span class="badge"><i class="ph-fill ph-plus"></i></span><span class="lbl">CREATE ROOM</span></button>
+      <div class="menu-pair">
+        <button class="btn btn-md dark" data-act="library"><i class="ph-fill ph-music-notes"></i><span class="lbl">SONG PACKS</span></button>
+        <button class="btn btn-md dark" data-act="how"><i class="ph-fill ph-question"></i><span class="lbl">HOW TO PLAY</span></button>
+      </div>
+    </div>
+
+    <button class="showcase panel" data-act="library" id="showcase">
+      <div class="sc-thumbs" id="scThumbs"></div>
+      <div class="sc-text"><b id="scTitle">Song packs</b><span id="scSub">Loading…</span></div>
+      <i class="ph-fill ph-caret-right sc-go"></i>
+    </button>
+  </section>
+
+  <!-- ================= LOBBY ================= -->
+  <section class="screen" id="s-lobby">
+    <div class="lobby-top">
+      <div class="banner">LOBBY</div>
+      <div class="slots" id="slots"></div>
+    </div>
+
+    <nav class="lobby-tabs" id="lobbyTabs">
+      <button data-lt="songs" class="on"><i class="ph-fill ph-music-notes"></i>Songs</button>
+      <button data-lt="rules"><i class="ph-fill ph-sliders-horizontal"></i>Rules</button>
+      <button data-lt="voice"><i class="ph-fill ph-microphone"></i>Voice</button>
+    </nav>
+
+    <aside class="panel side-l">
+      <div class="tab">SONG PACKS</div>
+      <div class="sl-head"><span class="hint" id="packHint">Pick the packs to sing from.</span><span class="count-chip" id="songCount">0 songs</span></div>
+      <div class="pack-list" id="packList"></div>
+      <div class="sl-foot">
+        <button class="btn btn-sm dark" data-act="library"><i class="ph-fill ph-squares-four"></i><span class="lbl">BROWSE</span></button>
+        <button class="btn btn-sm sky" data-act="newPack"><i class="ph-fill ph-plus"></i><span class="lbl">CREATE PACK</span></button>
+      </div>
+    </aside>
+
+    <aside class="side-r">
+      <div class="panel rules">
+        <div class="tab mint">GAME RULES</div>
+        <div class="rule"><span><i class="ph-duotone ph-repeat"></i>Rounds</span><div class="seg tight" data-setting="rounds"><button data-v="1">1</button><button data-v="3">3</button><button data-v="5">5</button><button data-v="7">7</button><button data-v="10">10</button></div></div>
+        <div class="rule"><span><i class="ph-duotone ph-timer"></i>Length</span><div class="seg tight" data-setting="length"><button data-v="15">15s</button><button data-v="30">30s</button><button data-v="45">45s</button><button data-v="75">75s</button><button data-v="120">2m</button></div></div>
+        <div class="rule"><span><i class="ph-duotone ph-users-three"></i>Crowd voices</span><div class="seg tight" data-setting="crowdVoice"><button data-v="off" title="The crowd can't be heard while someone sings">OFF</button><button data-v="distant" title="Quiet and far away, like a real audience">FAR</button><button data-v="live" title="Full volume">LIVE</button></div></div>
+        <div class="rule"><span><i class="ph-duotone ph-hand-pointing"></i>Tomatoes</span><button class="toggle" data-setting="tomatoes"></button></div>
+        <div class="rule"><span><i class="ph-duotone ph-target"></i>Missions</span><button class="toggle" data-setting="missions"></button></div>
+        <div class="rule"><span><i class="ph-duotone ph-cards"></i>Cards</span><div class="seg tight" data-setting="powers"><button data-v="off" title="No power-ups">OFF</button><button data-v="classic" title="Everyone gets Lights Out, Mute and Speed Up">CLASSIC</button><button data-v="draw" title="A Lucky Draw deals random cards every round">LUCKY</button></div></div>
+        <div class="rule"><span><i class="ph-duotone ph-globe-hemisphere-west"></i>Public room</span><button class="toggle" data-setting="isPublic"></button></div>
+        <p class="hint host-only-hint"><i class="ph-fill ph-lock-simple"></i> Only the host can change the rules.</p>
+      </div>
+      <div class="panel voice-card">
+        <div class="tab sky">VOICE</div>
+        <div class="vc-row">
+          <button class="mic-btn" id="micBtn" title="Mute / unmute (M)"><i class="ph-fill ph-microphone on-ic"></i><i class="ph-fill ph-microphone-slash off-ic"></i></button>
+          <div class="vc-meta"><b id="voiceState">Connecting…</b><div class="meter"><i id="voiceLevel"></i></div></div>
+        </div>
+        <p class="hint with-ic"><i class="ph-fill ph-headphones"></i>Headphones on, or everyone hears the music twice.</p>
+      </div>
+    </aside>
+
+    <div class="lobby-bottom">
+      <div class="ready-line" id="readyLine"></div>
+      <div class="invite-row">
+        <div class="code-box"><span>ROOM CODE</span><b id="roomCode">-----</b></div>
+        <button class="btn btn-sm dark" id="copyCode"><i class="ph-fill ph-link"></i><span class="lbl">COPY LINK</span></button>
+        <button class="btn btn-sm dark" data-act="addBot" id="addBotBtn"><i class="ph-fill ph-robot"></i><span class="lbl">ADD BOT</span></button>
+      </div>
+      <button class="btn btn-xl mint" data-act="start" id="startBtn"><span class="badge"><i class="ph-fill ph-play"></i></span><span class="lbl">START GAME</span></button>
+      <button class="btn btn-xl mint" data-act="ready" id="readyBtn"><span class="badge"><i class="ph-fill ph-check"></i></span><span class="lbl">READY!</span></button>
+    </div>
+    <button class="btn btn-md tomato leave" data-act="leave"><i class="ph-fill ph-sign-out"></i><span class="lbl">LEAVE</span></button>
+  </section>
+
+  <!-- ================= GAME ================= -->
+  <section class="screen" id="s-game">
+    <div class="round-chip panel"><div class="rc-round" id="rcRound">ROUND 1/3</div><div class="rc-line" id="rcLine"></div><div class="rc-phase"><i class="ph-fill ph-microphone-stage" id="rcIcon"></i><span id="rcPhase">UP NEXT</span></div></div>
+    <div class="scoreboard" id="scoreboard"></div>
+    <div class="game-tr">
+      <button class="mic-btn sm" id="micBtn2" title="Mute / unmute (M)"><i class="ph-fill ph-microphone on-ic"></i><i class="ph-fill ph-microphone-slash off-ic"></i></button>
+      <button class="icon-btn" data-act="settings" title="Settings"><i class="ph-fill ph-gear-six"></i></button>
+      <button class="btn btn-sm tomato" data-act="leave"><span class="lbl">QUIT</span></button>
+    </div>
+
+    <div class="tv" id="tv">
+      <div class="tv-frame"><div id="ytPlayer"></div><div class="tv-cover" id="tvCover"></div><div class="tv-shield"></div></div>
+      <div class="tv-label"><i class="ph-fill ph-music-note"></i><span id="tvTitle">Song</span></div>
+      <div class="tv-bar"><i id="tvBar"></i></div>
+      <div class="tv-timer" id="tvTimer"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" class="track"/><circle cx="20" cy="20" r="18" class="ring" id="tvRing"/></svg><span id="tvLeft">0:00</span><small>LEFT</small></div>
+    </div>
+
+    <div class="fx-layer fog-fx"></div>
+    <div class="fx-layer bubble-fx"><i style="--x:6%;--s:46px;--d:0s;--w:4.2s"></i><i style="--x:14%;--s:28px;--d:1.1s;--w:3.6s"></i><i style="--x:22%;--s:64px;--d:0.4s;--w:4.8s"></i><i style="--x:31%;--s:36px;--d:2.0s;--w:3.9s"></i><i style="--x:38%;--s:52px;--d:0.9s;--w:4.4s"></i><i style="--x:46%;--s:30px;--d:1.6s;--w:3.4s"></i><i style="--x:53%;--s:70px;--d:0.2s;--w:5.0s"></i><i style="--x:61%;--s:34px;--d:1.3s;--w:3.7s"></i><i style="--x:68%;--s:48px;--d:2.3s;--w:4.1s"></i><i style="--x:75%;--s:26px;--d:0.6s;--w:3.3s"></i><i style="--x:82%;--s:58px;--d:1.8s;--w:4.6s"></i><i style="--x:90%;--s:38px;--d:0.3s;--w:3.8s"></i><i style="--x:18%;--s:40px;--d:2.8s;--w:4.0s"></i><i style="--x:43%;--s:24px;--d:3.1s;--w:3.2s"></i><i style="--x:72%;--s:44px;--d:3.4s;--w:4.3s"></i></div>
+
+    <div class="rend" id="roundEnd">
+      <div class="re-kicker"><i class="ph-fill ph-flag-checkered"></i><span>ROUND COMPLETE</span></div>
+      <div class="re-title" id="reTitle">ROUND 1 DONE!</div>
+      <div class="re-sub" id="reSub">Everyone has sung. Here's where it stands.</div>
+      <ol class="re-board" id="reBoard"></ol>
+      <div class="re-next" id="reNext"></div>
+      <div class="pick-timer"><i id="reTimer"></i></div>
+    </div>
+
+    <div class="draw" id="draw">
+      <div class="draw-head">
+        <div class="dh-kicker"><i class="ph-fill ph-clover"></i>LUCKY DRAW</div>
+        <div class="dh-title" id="drawTitle">ROUND 1</div>
+        <div class="dh-sub">One secret card each. Everyone sings once this round: play your card on any of their songs, or lose it.</div>
+      </div>
+      <div class="draw-row" id="drawRow"></div>
+      <div class="dh-next" id="drawNext"></div>
+    </div>
+
+    <div class="tray">
+    <div class="mission" id="mission">
+      <div class="ms-kicker"><i class="ph-fill ph-target"></i><span id="msKicker">YOUR SECRET MISSION</span></div>
+      <div class="ms-body"><span class="cf-ic" id="msIcon"></span><div class="ms-txt"><b id="msName"></b><small id="msLine"></small></div><span class="ms-pts" id="msPts">+10</span></div>
+      <div class="ms-prog"><i id="msFill"></i></div>
+      <div class="ms-stamp" id="msStamp"></div>
+    </div>
+
+    <div class="hand" id="hand">
+      <div class="hand-title"><i class="ph-fill ph-cards"></i>YOUR CARDS</div>
+      <div class="hand-cards" id="handCards"></div>
+    </div>
+    </div>
+
+    <div class="hype panel" id="hype"><span class="hl">HYPE</span><div class="hype-track"><i id="hypeFill"></i></div><span class="hype-ic"><i class="ph-fill ph-fire"></i></span></div>
+    <div class="toasts" id="toasts"></div>
+
+    <div class="announce panel" id="announce">
+      <div class="tab" id="anKicker">UP NEXT</div>
+      <div class="an-av" id="anAv"></div>
+      <div class="an-who" id="anWho">MAYA</div>
+      <div class="an-song"><img id="anThumb" alt=""><div><b id="anSong">Song</b><small id="anChannel">Channel</small></div><span class="an-clip" id="anClip"></span></div>
+      <p class="an-hint" id="anHint"></p>
+      <div class="an-yours">
+        <div class="mic-check"><span class="mc-ic"><i class="ph-fill ph-microphone"></i></span><div class="meter big"><i id="micLevel"></i></div><span class="mc-txt" id="micTxt">Say something</span></div>
+        <div class="hp-note"><i class="ph-fill ph-headphones"></i><span><b>Headphones on!</b> Otherwise your mic picks up the music.</span></div>
+        <button class="btn btn-lg mint" id="singReady"><span class="lbl">I’M READY!</span><span class="rdy-t" id="readyT">5</span><i class="rdy-fill" id="readyFill"></i></button>
+      </div>
+      <div class="an-wait" id="anWait"></div>
+    </div>
+
+    <div class="countin" id="countin"></div>
+    <div class="verdict" id="verdict"><div class="vd-num" id="vdNum">0</div><div class="vd-label" id="vdLabel"></div><div class="vd-extras" id="vdExtras"></div></div>
+
+    <div class="pick" id="pick">
+      <div class="pick-head">
+        <div class="pick-who" id="pickWho"></div>
+        <div class="pick-title" id="pickTitle">PICK A SONG!</div>
+        <div class="pick-sub" id="pickSub">The most votes wins.</div>
+      </div>
+      <div class="pick-cards" id="pickCards"></div>
+      <div class="pick-foot">
+        <div class="pick-timer"><i id="pickTimer"></i></div>
+        <div class="pick-status"><span class="voters" id="pickVoters"></span><span id="pickCount"></span></div>
+      </div>
+    </div>
+
+    <div class="vote panel" id="vote">
+      <div class="tab">YOUR SECRET VOTE</div>
+      <div class="vote-title" id="voteTitle">RATE MAYA!</div>
+      <div class="vote-timer"><i id="voteTimer"></i></div>
+      <div class="vbtns" id="vbtns"></div>
+      <div class="vote-sub"><span class="voters" id="voters"></span><span id="votersTxt">0 of 4 voted</span></div>
+    </div>
+
+    <div class="bottom">
+      <div class="caption" id="caption"></div>
+      <div class="dock panel" id="dock">
+        <button class="rx" data-rx="clap" title="Applause (1)">👏<kbd>1</kbd></button>
+        <button class="rx" data-rx="laugh" title="Laugh (2)">😂<kbd>2</kbd></button>
+        <button class="rx" data-rx="fire" title="Fire (3)">🔥<kbd>3</kbd></button>
+        <button class="rx" data-rx="tomato" title="Throw a tomato (4)">🍅<kbd>4</kbd></button>
+      </div>
+      <div class="sing-bar panel" id="singBar">
+        <span class="sb-mic"><i class="ph-fill ph-microphone-stage"></i></span>
+        <div class="sb-meta"><b>YOU’RE ON STAGE</b><div class="meter"><i id="singLevel"></i></div></div>
+        <div class="sb-left"><b id="singLeft">0:00</b><small>LEFT</small></div>
+        <span class="sb-hint" id="singHint">Sing along with the video!</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FINAL ================= -->
+  <section class="screen" id="s-final">
+    <div class="final-banner"><i class="ph-fill ph-trophy"></i>SHOW’S OVER!</div>
+    <div class="final-bottom">
+      <div class="results" id="results"></div>
+      <div class="final-actions">
+        <button class="btn btn-md dark" data-act="leave"><i class="ph-fill ph-house"></i><span class="lbl">MAIN MENU</span></button>
+        <button class="btn btn-lg mint" data-act="again" id="againBtn"><span class="badge"><i class="ph-fill ph-arrow-clockwise"></i></span><span class="lbl">PLAY AGAIN</span></button>
+        <span class="wait-chip" id="againHint"><i class="ph-fill ph-hourglass-medium"></i>Waiting for the host…</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MODALS ================= -->
+  <div class="modal" id="m-rooms">
+    <div class="panel rooms">
+      <div class="tab">FIND A ROOM</div>
+      <button class="close-x" data-act="close" title="Close"><i class="ph-fill ph-x"></i></button>
+      <div class="rooms-head"><span class="count-chip" id="onlineTxt"><i class="ph-fill ph-users-three"></i><span>Looking for rooms…</span></span></div>
+      <div class="room-list" id="roomList"></div>
+      <div class="rooms-foot">
+        <div class="code-input"><i class="ph-fill ph-key ci-ic"></i><input id="joinCode" placeholder="ROOM CODE" maxlength="5" autocomplete="off" spellcheck="false"><button data-act="joinCode" title="Join"><i class="ph-fill ph-arrow-right"></i></button></div>
+        <button class="btn btn-md sky" data-act="quick"><i class="ph-fill ph-shuffle"></i><span class="lbl">QUICK MATCH</span></button>
+        <button class="btn btn-md mustard" data-act="create"><i class="ph-fill ph-plus"></i><span class="lbl">CREATE ROOM</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="m-how">
+    <div class="panel how">
+      <div class="tab">HOW TO PLAY</div>
+      <button class="close-x" data-act="close" title="Close"><i class="ph-fill ph-x"></i></button>
+      <nav class="how-nav" id="howNav">
+        <button data-sec="game" class="on"><i class="ph-fill ph-microphone-stage"></i>The game</button>
+        <button data-sec="cards"><i class="ph-fill ph-cards"></i>Cards</button>
+        <button data-sec="score"><i class="ph-fill ph-star"></i>Scoring</button>
+        <button data-sec="keys"><i class="ph-fill ph-keyboard"></i>Controls</button>
+      </nav>
+      <div class="how-pages">
+        <section class="how-page on" data-sec="game">
+          <p class="how-lead">A game is a few rounds. <b>In every round, everyone sings once.</b></p>
+          <div class="how-round">
+            <div class="hr-step k-good"><span class="cf-ic"><i class="ph-fill ph-clover"></i></span><span><b>Lucky Draw</b><small>One secret card each</small></span></div>
+            <i class="ph-bold ph-caret-right hr-arr"></i>
+            <div class="hr-step hr-turns k-sab"><span class="cf-ic"><i class="ph-fill ph-users-three"></i></span><span><b>Everyone's turn</b><small>One by one, each player sings</small></span></div>
+            <i class="ph-bold ph-caret-right hr-arr"></i>
+            <div class="hr-step k-self"><span class="cf-ic"><i class="ph-fill ph-flag-checkered"></i></span><span><b>Round done</b><small>Standings, then the next round</small></span></div>
+          </div>
+          <h4>One turn <span>Every player's turn on the mic goes like this</span></h4>
+          <ol class="how-flow">
+            <li class="k-gold"><span class="cf-ic"><i class="ph-fill ph-playlist"></i></span><b>Song pick</b><small>The crowd votes between three songs. The singer gets the winner.</small></li>
+            <li class="k-sab"><span class="cf-ic"><i class="ph-fill ph-microphone-stage"></i></span><b>Sing</b><small>The crowd cheers, plays cards and chases secret missions.</small></li>
+            <li class="k-self"><span class="cf-ic"><i class="ph-fill ph-check-square"></i></span><b>Vote</b><small>Everyone rates the song from 1 to 5, in secret.</small></li>
+            <li class="k-vote"><span class="cf-ic"><i class="ph-fill ph-trophy"></i></span><b>Verdict</b><small>The score goes up and the points land.</small></li>
+          </ol>
+          <h4>Room rules <span>The host sets them in the lobby</span></h4>
+          <div class="how-rules">
+            <div><i class="ph-fill ph-repeat"></i><b>Rounds</b><span>How many times everyone sings (3 to start).</span></div>
+            <div><i class="ph-fill ph-timer"></i><b>Length</b><span>How long each song runs. Short ones start at the chorus.</span></div>
+            <div><i class="ph-fill ph-users-three"></i><b>Crowd voices</b><span>Hear the crowd while someone sings: off, far away or live.</span></div>
+            <div><i class="ph-fill ph-cards"></i><b>Cards</b><span>Off, Classic (three sabotages each) or Lucky (a new card every round).</span></div>
+            <div><i class="ph-fill ph-hand-pointing"></i><b>Tomatoes</b><span>Let the crowd throw tomatoes, or keep it friendly.</span></div>
+            <div><i class="ph-fill ph-target"></i><b>Missions</b><span>A secret mission for everyone in the crowd, every song.</span></div>
+          </div>
+        </section>
+        <section class="how-page" data-sec="cards">
+          <p class="how-lead">In <b>Lucky</b> mode every round starts with a draw. Your card is secret: the others only see how many you hold. <b>Use it this round or lose it.</b></p>
+          <div class="how-cardlist" id="howCards"></div>
+        </section>
+        <section class="how-page" data-sec="score">
+          <p class="how-lead">Only the votes decide the score. Cheers, laughs and tomatoes just move the hype meter.</p>
+          <div class="how-score">
+            <div class="hs hs-main"><span class="hs-big">4.2 <em>×</em> 20 = 84</span><span><b>Your song</b><small>The crowd's average vote, times 20. Up to 100 a song.</small></span></div>
+            <div class="hs"><span class="hs-big mint">+10</span><span><b>Good judge</b><small>Vote close to the crowd's average.</small></span></div>
+            <div class="hs"><span class="hs-big sky">×2</span><span><b>Double Up</b><small>This card doubles your song's points.</small></span></div>
+            <div class="hs"><span class="hs-big mustard">+50</span><span><b>Points cards</b><small>Bonuses (or Bad Luck) land on your next song.</small></span></div>
+            <div class="hs"><span class="hs-big pink">×3</span><span><b>Golden Vote</b><small>This card makes your vote count three times.</small></span></div>
+            <div class="hs hs-wide"><span class="hs-big mint">+10</span><span><b>Crowd missions</b><small>While someone sings, you get a secret mission, like "laugh 4 times" or "react before anyone else". Pull it off and the points land on the spot. No talking needed.</small></span></div>
+          </div>
+        </section>
+        <section class="how-page" data-sec="keys">
+          <div class="how-keys">
+            <div><span class="keys"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></span><b>React</b><small>Applause, laugh, fire, tomato</small></div>
+            <div><span class="keys"><kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd></span><b>Play a card</b><small>Your sabotage cards, left to right</small></div>
+            <div><span class="keys"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd></span><b>Pick a song</b><small>During the song pick</small></div>
+            <div><span class="keys"><kbd>1</kbd><span class="dash">to</span><kbd>5</kbd></span><b>Vote</b><small>Rate the singer</small></div>
+            <div><span class="keys"><kbd>M</kbd></span><b>Mute your mic</b><small>Anytime</small></div>
+            <div><span class="keys"><kbd>Enter</kbd></span><b>I'm ready</b><small>When it's your turn (or wait 5 seconds)</small></div>
+          </div>
+          <p class="how-note"><i class="ph-fill ph-headphones"></i>Wear headphones when you sing, or your mic picks up the music and everyone hears it twice.</p>
+        </section>
+      </div>
+      <button class="btn btn-lg mustard" data-act="close"><span class="lbl">GOT IT!</span></button>
+    </div>
+  </div>
+
+  <div class="modal" id="m-library">
+    <div class="panel library">
+      <button class="close-x" data-act="close" title="Close"><i class="ph-fill ph-x"></i></button>
+      <div class="lib-top">
+        <div class="lib-title">SONG PACKS</div>
+        <div class="lib-search"><i class="ph-fill ph-magnifying-glass"></i><input id="libSearch" placeholder="Search packs, songs or artists…" autocomplete="off" spellcheck="false"><button class="btn btn-sm sky" id="libGo"><span class="lbl">SEARCH</span><i class="ph-fill ph-caret-right"></i></button></div>
+      </div>
+      <div class="lib-filters" id="libFilters"></div>
+      <div class="lib-count" id="libCount"></div>
+      <div class="lib-grid" id="libGrid"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="m-pack">
+    <div class="panel pack-editor">
+      <div class="tab sky" id="peTitle">CREATE PACK</div>
+      <button class="close-x" data-act="close" title="Close"><i class="ph-fill ph-x"></i></button>
+      <div class="pe-grid">
+        <div class="pe-left">
+          <div class="cover big" id="peCover"></div>
+          <label class="field col"><span>Pack name</span><input id="peName" maxlength="40" placeholder="My Pack" autocomplete="off"></label>
+          <div class="field col"><span>Icon</span><div class="icon-grid" id="peIcons"></div></div>
+          <div class="field col"><span>Color</span><div class="swatches" id="peColors"></div></div>
+          <div class="grow"></div>
+          <button class="btn btn-sm tomato" id="peDelete"><i class="ph-fill ph-trash"></i><span class="lbl">DELETE PACK</span></button>
+        </div>
+        <div class="pe-right">
+          <div class="pe-add">
+            <div class="code-input wide"><i class="ph-fill ph-youtube-logo ci-ic yt"></i><input id="peLink" placeholder="Paste a YouTube karaoke link…" autocomplete="off" spellcheck="false"><button id="peAdd" title="Add song"><i class="ph-fill ph-plus"></i></button></div>
+            <div class="pe-msg" id="peMsg"></div>
+            <div class="channels"><span>Channels that work:</span><div id="peChannels"></div></div>
+          </div>
+          <div class="pe-preview" id="pePreview">
+            <div class="pe-player"><div id="pePlayer"></div></div>
+            <div class="pe-trim">
+              <b id="pePrevTitle">Pick a song to preview</b>
+              <div class="trim-row"><label>Start <input id="peStart" placeholder="0:00"></label><button class="btn btn-sm dark" id="peSetStart"><i class="ph-fill ph-flag"></i><span class="lbl">START HERE</span></button></div>
+              <div class="trim-row"><label>End <input id="peEnd" placeholder="auto"></label><button class="btn btn-sm dark" id="peSetEnd"><i class="ph-fill ph-flag-checkered"></i><span class="lbl">END HERE</span></button></div>
+              <p class="hint">Start where the singing starts. End is optional.</p>
+            </div>
+          </div>
+          <div class="pe-songs" id="peSongs"></div>
+        </div>
+      </div>
+      <div class="pe-foot">
+        <span class="count-chip" id="peCount"><i class="ph-fill ph-music-notes"></i><span>0 songs</span></span>
+        <button class="btn btn-lg mint" id="peSave"><span class="badge"><i class="ph-fill ph-floppy-disk"></i></span><span class="lbl">SAVE PACK</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="m-settings">
+    <div class="panel settings">
+      <div class="tab">SETTINGS</div>
+      <button class="close-x" data-act="close" title="Close"><i class="ph-fill ph-x"></i></button>
+      <label class="slider"><span><i class="ph-duotone ph-music-notes"></i>Music</span><input type="range" min="0" max="100" id="volMusic"><b></b></label>
+      <label class="slider"><span><i class="ph-duotone ph-users-three"></i>Voices</span><input type="range" min="0" max="100" id="volVoice"><b></b></label>
+      <label class="slider"><span><i class="ph-duotone ph-speaker-high"></i>Effects</span><input type="range" min="0" max="100" id="volSfx"><b></b></label>
+      <label class="field col"><span>Microphone</span><select id="micSelect"></select></label>
+      <button class="btn btn-md mustard" data-act="close"><span class="lbl">DONE</span></button>
+    </div>
+  </div>
+
+  <div class="modal" id="m-replaced">
+    <div class="panel replaced">
+      <div class="tab">ANOTHER TAB</div>
+      <span class="big-ic tomato"><i class="ph-duotone ph-browsers"></i></span>
+      <b>Off Key is open in another tab</b>
+      <p class="hint">You can only play from one tab at a time, so this one stepped aside (and stopped its voice so you don’t hear yourself).</p>
+      <button class="btn btn-lg mustard" onclick="location.reload()"><span class="lbl">PLAY HERE INSTEAD</span></button>
+    </div>
+  </div>
+  <div class="pmenu" id="pmenu" hidden>
+    <div class="pm-head"><span id="pmAv"></span><div><b id="pmName">Player</b><small id="pmSub">In the room</small></div></div>
+    <button class="pm-item" id="pmMute"><i class="ph-fill ph-speaker-slash"></i><span>Mute for me</span></button>
+    <button class="pm-item danger" id="pmKick"><i class="ph-fill ph-user-minus"></i><span>Kick from room</span></button>
+  </div>
+  <div class="notices" id="notices"></div>
+</div>
+
+<div id="loading">
+  <div class="ld-stripes"></div>
+  <div class="ld-center">
+    <div class="logo-slot"></div>
+    <div class="ld-bar"><i id="ldFill"></i></div>
+    <div class="ld-txt" id="ldTxt">Warming up the mic…</div>
+  </div>
+  <div class="ld-tip" id="ldTip"></div>
+</div>
+<div id="wipe"><div class="w a"></div><div class="w b"><div class="logo-slot"></div></div></div>
+
+<script type="module" src="/js/main.js"></script>
+</body>
+</html>
