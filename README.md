@@ -4,7 +4,7 @@ A karaoke party game for 2-6 friends, played in the browser. Everyone takes the 
 
 Nothing to download for players: one person runs the server, everyone else opens a link. It works on phones too.
 
-![Off Key](docs/hero.jpg)
+[![Off Key - watch the trailer](docs/hero.jpg)](https://www.youtube.com/watch?v=wJKpDDhbFXo)
 
 | | |
 |---|---|
